@@ -1343,10 +1343,41 @@ window.vm = new Vue({
           return
         }
         e.preventDefault()
-
         var pressure = 0.5
         activeFinger(0, e.pageX, e.pageY, pressure);
         // that.touchMove(0, x / screen.bounds.w, y / screen.bounds.h, pressure);
+
+        var pos = coord(e);
+        console.log('cur pos:', pos);
+        // change precision
+        pos.px = Math.floor(pos.px * 1000) / 1000;
+        pos.py = Math.floor(pos.py * 1000) / 1000;
+        pos.x = Math.floor(pos.px * element.width);
+        pos.y = Math.floor(pos.py * element.height);
+        self.cursor = pos;
+      
+        // Draw rectangle
+        if (self.mouse_down) {
+          //self.drawRefresh();
+          var startX = self.mouse_down.x;
+          var startY = self.mouse_down.y;
+          var width = pos.x - startX;
+          var height = pos.y - startY;
+          var ctx = self.canvas.fg.getContext("2d");
+          ctx.clearRect(0, 0, element.width, element.height);
+          ctx.beginPath();
+          ctx.strokeRect(startX, startY, width, height);
+          //ctx.rect(startX, startY, width, height);
+          //ctx.stroke();
+          ctx.closePath();
+          tip = 'rect(' + self.mouse_down.px.toFixed(3) + ", " + self.mouse_down.py.toFixed(3) + ", " + (pos.x / element.width).toFixed(3) + ", " + (pos.y / element.height).toFixed(3) + ")"
+
+          if (self.autoCopy) {
+            copyToClipboard(tip);
+          }
+          self.generatedCode = tip;
+          self.tip = tip;
+        }
       }
 
       function mouseHoverLeaveListener(event) {
@@ -1376,6 +1407,9 @@ window.vm = new Vue({
         self.nodeHovered = null;
         markPosition(self.cursor)
 
+        if(self.tip != ''){
+          self.codeInsert(self.tip);
+        }
         stopMousing()
       }
 
@@ -1446,6 +1480,9 @@ window.vm = new Vue({
           return
         }
         e.preventDefault()
+
+        self.mouse_down = coord(e);
+        console.log('down pos:', self.mouse_down);
 
         fakePinch = e.altKey
         calculateBounds()
