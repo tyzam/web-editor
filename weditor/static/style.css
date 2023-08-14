@@ -239,3 +239,13 @@ div.ace_gutter-cell.ace_code_exercised { /* code already runed
 .prop-value {
   white-space: pre;
 }
+
+.menu {
+  z-index: 2;
+  position: absolute;
+  /*top: 0;
+  left: 0;*/
+  background-color: white;
+  border: 1px solid black;
+  padding: 5px;
+}

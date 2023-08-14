@@ -59,7 +59,12 @@ window.vm = new Vue({
       lineno: {
         offset: 0,
         current: -1,
-      }
+      },
+      showMenu: false,
+      menuPosition: { x: 0, y: 0 },
+      txtInput: '',
+      labelInput: '',
+      stopInput: ''
     }
   },
   watch: {
@@ -1300,6 +1305,43 @@ window.vm = new Vue({
       })
       this.drawNode(this.nodeHovered, "blue");
     },
+    handleOptionClick(/*option, */input1, input2, input3) {
+      console.log(`Selected option: input value: ${input1}, ${input2}, ${input3}`);
+      if (this.mouse_rect_tip != ''){
+        if (input3 != ""){
+          remain = ", '" + input3 + "'), 1))";
+        }
+        else{
+          remain = ", None), 1))"
+        }
+
+        if (input2 != ""){
+          name1 = "['" + input1 + "']"
+          remain = "), (('" + input2 + "'" + remain;
+        }
+        else{
+          name1 = "'" + input1 + "'"
+          remain = "), (None, 1, None))";
+        }
+        
+        tip = "(" + name1 + ", common.rect(" + this.mouse_rect_tip + remain;
+
+        if (this.autoCopy) {
+          copyToClipboard(tip);
+        }
+
+        this.generatedCode = tip;
+        this.tip = tip;
+        // Do something with the selected option and input value
+        // For example, close the menu and update a data property
+        this.showMenu = false;
+        //this.selectedOption = option;
+        this.txtInput = this.labelInput = this.stopInput = '';
+
+        this.codeInsert(this.tip);
+
+      }
+    },
     activeMouseControl: function () {
       var self = this;
       var element = this.canvas.fg;
@@ -1321,7 +1363,6 @@ window.vm = new Vue({
           el = el.offsetParent
         }
       }
-
       function activeFinger(index, x, y, pressure) {
         var scale = 0.5 + pressure
         $(".finger-" + index)
@@ -1347,6 +1388,44 @@ window.vm = new Vue({
         var pressure = 0.5
         activeFinger(0, e.pageX, e.pageY, pressure);
         // that.touchMove(0, x / screen.bounds.w, y / screen.bounds.h, pressure);
+
+        var pos = coord(e);
+        //console.log('cur pos:', pos);
+        // change precision
+        pos.px = Math.floor(pos.px * 1000) / 1000;
+        pos.py = Math.floor(pos.py * 1000) / 1000;
+        pos.x = Math.floor(pos.px * element.width);
+        pos.y = Math.floor(pos.py * element.height);
+        self.cursor = pos;
+      
+        // Draw rectangle
+        if (self.mouse_down) {
+          //self.drawRefresh();
+          var startX = self.mouse_down.x;
+          var startY = self.mouse_down.y;
+          var width = pos.x - startX;
+          var height = pos.y - startY;
+          var ctx = self.canvas.fg.getContext("2d");
+          ctx.clearRect(0, 0, element.width, element.height);
+          ctx.beginPath();
+          ctx.strokeRect(startX, startY, width, height);
+          //ctx.rect(startX, startY, width, height);
+          //ctx.stroke();
+          ctx.closePath();
+          l = Math.min(self.mouse_down.px, pos.px);
+          r = Math.max(self.mouse_down.px, pos.px);
+          t = Math.min(self.mouse_down.py, pos.py);
+          b = Math.max(self.mouse_down.py, pos.py);
+          self.mouse_rect_tip = l.toFixed(3) + ", " + t.toFixed(3) + ", " + r.toFixed(3) + ", " + b.toFixed(3);
+          /*tip = '([\'\'], common.rect(' + self.mouse_down.px.toFixed(3) + ", " + self.mouse_down.py.toFixed(3) + ", " + (pos.x / element.width).toFixed(3) + ", " + (pos.y / element.height).toFixed(3) + '), ((\'\', None), ))'
+          //tip = 'rect(' + self.mouse_down.px.toFixed(3) + ", " + self.mouse_down.py.toFixed(3) + ", " + (pos.x / element.width).toFixed(3) + ", " + (pos.y / element.height).toFixed(3) + ")"
+
+          if (self.autoCopy) {
+            copyToClipboard(tip);
+          }
+          self.generatedCode = tip;
+          self.tip = tip;*/
+        }
       }
 
       function mouseHoverLeaveListener(event) {
@@ -1375,7 +1454,11 @@ window.vm = new Vue({
 
         self.nodeHovered = null;
         markPosition(self.cursor)
-
+        if(self.tip != ''){
+          self.menuPosition.x = Math.floor(pos.px * self.canvas.width);
+          self.menuPosition.y = Math.floor(pos.px * self.canvas.height);
+          self.showMenu = true;
+        }
         stopMousing()
       }
 
@@ -1446,6 +1529,11 @@ window.vm = new Vue({
           return
         }
         e.preventDefault()
+        
+        self.mouse_down = coord(e);
+        self.mouse_rect_tip = '';
+        self.showMenu = false;
+        //console.log('down pos:', self.mouse_down);
 
         fakePinch = e.altKey
         calculateBounds()
