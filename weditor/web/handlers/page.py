@@ -201,14 +201,13 @@ class DeviceWidgetListHandler(BaseHandler):
             "data": widget_data,
         })
 
-
 class DeviceScreenshotHandler(BaseHandler):
     def get(self, serial):
         logger.info("Serial: %s", serial)
         try:
             d = get_device(serial)
             buffer = io.BytesIO()
-            d.screenshot().convert("RGB").save(buffer, format='JPEG')
+            d.screenshot()
             b64data = base64.b64encode(buffer.getvalue())
             response = {
                 "type": "jpeg",

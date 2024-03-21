@@ -91,7 +91,6 @@ def make_app(settings={}):
             (r"/", MainHandler),
             (r"/api/v1/version", VersionHandler),
             (r"/api/v1/connect", DeviceConnectHandler),
-            (r"/api/v1/crop", CropHandler),
             (r"/api/v1/devices/([^/]+)/screenshot", DeviceScreenshotHandler),
             (r"/api/v1/devices/([^/]+)/hierarchy", DeviceHierarchyHandler),
             # (r"/api/v1/devices/([^/]+)/exec", DeviceCodeDebugHandler),

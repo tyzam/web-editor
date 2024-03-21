@@ -86,22 +86,22 @@
         </div>
         <section id="screen">
           <canvas id="fgCanvas" @dblclick="doTap(nodeSelected)" class="canvas-fg" v-bind:style="canvasStyle"></canvas>
-          <div v-if="showMenu" :style="{ top: `${menuPosition.y}px`, left: `${menuPosition.x}px` }" class="menu">
+          <div v-if="helper.showMenu" :style="{ top: `${helper.menuPosition.y}px`, left: `${helper.menuPosition.x}px` }" class="menu">
             <ul>
               <li>
                 text
-                <input type="text" v-model="txtInput">
+                <input type="text" v-model="helper.txtInput">
                 <!-- <button @click="handleOptionClick('1', option1Input)">Select</button> -->
               </li>
               <li>
                 label
-                <input type="text" v-model="labelInput">
+                <input type="text" v-model="helper.labelInput">
                 <!-- <button @click="handleOptionClick('2', option2Input)">Select</button> -->
               </li>
               <li>
                 stop tip
-                <input type="text" v-model="stopInput">
-                <button @click="handleOptionClick(txtInput, labelInput, stopInput)">ok</button>
+                <input type="text" v-model="helper.stopInput">
+                <button @click="handleOptionClick(helper.txtInput, helper.labelInput, helper.stopInput)">ok</button>
               </li>
             </ul>
           </div>          
@@ -215,6 +215,7 @@
               <input v-model="useXPathOnly" type="checkbox"> 强制使用XPath
             </label>
           </div>
+          <input type="text" v-model="generatedTip" class="form-control input-sm" style="height: 80px;">
         </div>
       </div>
       <div class="vertical-gap"></div>

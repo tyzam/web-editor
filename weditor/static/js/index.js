@@ -11,6 +11,14 @@ window.vm = new Vue({
     error: '',
     wsBuild: null,
     generatedCode: '',
+    generatedTip: '',
+    helper:{
+      showMenu: false,
+      menuPosition: { x: 0, y: 0 },
+      txtInput: '',
+      labelInput: '',
+      stopInput: ''
+    },
     editor: null,
     cursor: {},
     showCursorPercent: true,
@@ -60,11 +68,6 @@ window.vm = new Vue({
         offset: 0,
         current: -1,
       },
-      showMenu: false,
-      menuPosition: { x: 0, y: 0 },
-      txtInput: '',
-      labelInput: '',
-      stopInput: ''
     }
   },
   watch: {
@@ -1334,7 +1337,7 @@ window.vm = new Vue({
         this.tip = tip;
         // Do something with the selected option and input value
         // For example, close the menu and update a data property
-        this.showMenu = false;
+        this.helper.showMenu = false;
         //this.selectedOption = option;
         this.txtInput = this.labelInput = this.stopInput = '';
 
@@ -1374,6 +1377,14 @@ window.vm = new Vue({
         $(".finger-" + index).removeClass("active")
       }
 
+      function calculateRectCoordinates(mouseDown, pos) {
+        const l = Math.min(mouseDown.x, pos.x);
+        const r = Math.max(mouseDown.x, pos.x);
+        const t = Math.min(mouseDown.y, pos.y);
+        const b = Math.max(mouseDown.y, pos.y);
+        return { l, r, t, b };
+    }
+      
       function mouseMoveListener(event) {
         var e = event
         if (e.originalEvent) {
@@ -1412,19 +1423,22 @@ window.vm = new Vue({
           //ctx.rect(startX, startY, width, height);
           //ctx.stroke();
           ctx.closePath();
-          l = Math.min(self.mouse_down.px, pos.px);
-          r = Math.max(self.mouse_down.px, pos.px);
-          t = Math.min(self.mouse_down.py, pos.py);
-          b = Math.max(self.mouse_down.py, pos.py);
+          var { l, r, t, b } = calculateRectCoordinates(self.mouse_down, pos);
           self.mouse_rect_tip = l.toFixed(3) + ", " + t.toFixed(3) + ", " + r.toFixed(3) + ", " + b.toFixed(3);
-          /*tip = '([\'\'], common.rect(' + self.mouse_down.px.toFixed(3) + ", " + self.mouse_down.py.toFixed(3) + ", " + (pos.x / element.width).toFixed(3) + ", " + (pos.y / element.height).toFixed(3) + '), ((\'\', None), ))'
+          px = (r / element.width)
+          py = (b / element.height)
+          l = Math.min(self.mouse_down.px, px);
+          r = Math.max(self.mouse_down.px, px);
+          t = Math.min(self.mouse_down.py, py);
+          b = Math.max(self.mouse_down.py, py);
+          tip = '([\'\'], common.rect(' + l.toFixed(3) + ", " + t.toFixed(3) + ", " + r.toFixed(3) + ", " + b.toFixed(3) + '), ((\'\', None), ))'
           //tip = 'rect(' + self.mouse_down.px.toFixed(3) + ", " + self.mouse_down.py.toFixed(3) + ", " + (pos.x / element.width).toFixed(3) + ", " + (pos.y / element.height).toFixed(3) + ")"
 
           if (self.autoCopy) {
             copyToClipboard(tip);
           }
           self.generatedCode = tip;
-          self.tip = tip;*/
+          self.tip = tip;
         }
       }
 
@@ -1453,20 +1467,28 @@ window.vm = new Vue({
         self.cursor = pos;
 
         self.nodeHovered = null;
-        markPosition(self.cursor)
-        if(self.tip != ''){
-          self.menuPosition.x = Math.floor(pos.px * self.canvas.width);
-          self.menuPosition.y = Math.floor(pos.px * self.canvas.height);
-          self.showMenu = true;
+        if (self.mouse_down) {
+          if(pos.x != self.mouse_down.x && pos.y != self.mouse_down.y){
+            const { l, r, t, b } = calculateRectCoordinates(self.mouse_down, pos);
+            if(self.tip != ''){
+              self.helper.menuPosition.x = e.clientX;
+              self.helper.menuPosition.y = e.clientY;
+              self.helper.showMenu = true;
+            }
+          }
+
+          //self.generatedTip = "" + self.mouse_down.px * element.width + ", " + self.mouse_down.py * element.height + ", " + pos.x + ", " +pos.y + ")";
+          self.mouse_down = null;
         }
+        markPosition(self.cursor)
         stopMousing()
       }
 
       function stopMousing() {
         element.removeEventListener('mousemove', mouseMoveListener);
         element.addEventListener('mousemove', mouseHoverListener);
-        element.addEventListener('mouseleave', mouseHoverLeaveListener);
         document.removeEventListener('mouseup', mouseUpListener);
+        element.addEventListener('mouseleave', mouseHoverLeaveListener);
         deactiveFinger(0);
       }
 
@@ -1544,6 +1566,7 @@ window.vm = new Vue({
         var pressure = 0.5
         activeFinger(0, e.pageX, e.pageY, pressure);
 
+        self.helper.showMenu = true;
         if (self.nodeHovered) {
           self.nodeSelected = self.nodeHovered;
           self.drawAllNode();
